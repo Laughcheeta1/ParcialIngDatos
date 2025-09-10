@@ -1,0 +1,4 @@
+selenium
+sqlmodel
+psycopg2-binary 
+dotenv
