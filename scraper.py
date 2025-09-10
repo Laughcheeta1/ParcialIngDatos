@@ -105,9 +105,15 @@ def visit_book_page(link: str, driver):
 
     book_image_url = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="product_gallery"]/div/div/div/img'))).get_attribute('src')
 
-    book_description = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="content_inner"]/article/p'))).text
+    try:
+        book_description = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="content_inner"]/article/p'))).text
+    except:
+        book_description = "No description available"
 
-    book_rating = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="content_inner"]/article/div[1]/div[2]/p[3]'))).get_attribute('class')
+    try:
+        book_rating = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="content_inner"]/article/div[1]/div[2]/p[3]'))).get_attribute('class')
+    except:
+        book_rating = "star-rating Zero"
     if 'One' in book_rating:
         book_rating = 1
     elif 'Two' in book_rating:
@@ -118,6 +124,8 @@ def visit_book_page(link: str, driver):
         book_rating = 4
     elif 'Five' in book_rating:
         book_rating = 5
+    else:
+        book_rating = 0
 
     return {
         'upc': book_upc,

@@ -164,12 +164,10 @@ def transfer_data_to_analytical():
                     # Create Score dimension
                     dim_score = None
                     if book.scores:
-                        rating_category = classify_rating(book.scores.score)
                         dim_score = get_or_create_dimension(
                             anal_session,
                             DimScore,
-                            score=book.scores.score,
-                            rating_category=rating_category
+                            score=book.scores.score
                         )
                     
                     # Create Price dimension
@@ -182,7 +180,8 @@ def transfer_data_to_analytical():
                         DimPrice,
                         price_before_tax=price_before_tax,
                         price_after_tax=price_after_tax,
-                        price_range=price_range
+                        price_range=price_range,
+                        tax_id=dim_tax.id
                     )
                     
                     # Create Fact record
@@ -194,9 +193,7 @@ def transfer_data_to_analytical():
                         category_id=dim_category.id if dim_category else None,
                         stock_id=dim_stock.id if dim_stock else None,
                         score_id=dim_score.id if dim_score else None,
-                        price_id=dim_price.id,
-                        tax_id=dim_tax.id,
-                        created_date=datetime.now()
+                        price_id=dim_price.id
                     )
                     
                     anal_session.add(fact_book)
@@ -233,31 +230,27 @@ def transfer_data_to_analytical():
 
 def show_analytical_statistics():
     """Show statistics from the analytical database"""
-    with Session(analytical_engine) as session:
-        # Total books
-        total_books = len(session.exec(select(FactBook)).all())
+    # Importar las funciones del archivo de análisis
+    from analisis_libros import ejecutar_analisis
+    
+    try:
+        # Ejecutar todas las consultas analíticas
+        ejecutar_analisis()
+    except Exception as e:
+        print(f"\nError al ejecutar análisis: {e}")
+        print("\nEjecutando estadísticas básicas como respaldo...")
         
-        # Books by category
-        categories = session.exec(select(DimCategory)).all()
-        
-        # Books by price range
-        price_ranges = session.exec(select(DimPrice.price_range).distinct()).all()
-        
-        # Books by stock status
-        stock_statuses = session.exec(select(DimStock.stock_status).distinct()).all()
-        
-        print("\n" + "="*50)
-        print("Analytical Database Statistics")
-        print("="*50)
-        print(f"\nTotal Books: {total_books}")
-        print(f"Total Categories: {len(categories)}")
-        print(f"Price Ranges: {', '.join([pr for pr in price_ranges if pr])}")
-        print(f"Stock Statuses: {', '.join([ss for ss in stock_statuses if ss])}")
-        
-        # Top categories
-        print("\nTop Categories:")
-        for category in categories[:5]:
-            books_count = len(session.exec(
-                select(FactBook).where(FactBook.category_id == category.id)
-            ).all())
-            print(f"  - {category.name}: {books_count} books")
+        # Estadísticas básicas de respaldo
+        with Session(analytical_engine) as session:
+            total_books = len(session.exec(select(FactBook)).all())
+            categories = session.exec(select(DimCategory)).all()
+            
+            print("\n" + "="*50)
+            print("Estadísticas Básicas de la Base de Datos Analítica")
+            print("="*50)
+            print(f"\nTotal de Libros: {total_books}")
+            print(f"Total de Categorías: {len(categories)}")
+            
+            if total_books == 0:
+                print("\n⚠ No hay datos en la base de datos analítica.")
+                print("Por favor, ejecute primero la opción 4 (Transferir datos ETL)")

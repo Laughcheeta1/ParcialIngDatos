@@ -7,6 +7,9 @@ from database import get_session
 def save_book_information(book_information: dict, category_name: str):
     # First save the category
     category = CategoryCRUD.create(category_name)
+    if not category:
+        print(f"Failed to create category: {category_name}")
+        return
 
     book = BookCRUD.create(
         upc=book_information['upc'],
@@ -17,8 +20,12 @@ def save_book_information(book_information: dict, category_name: str):
         image_url=book_information['image_url'],
         stock_int=book_information['stock']
     )
+    
+    if not book:
+        print(f"Failed to create book: {book_information['title']}")
+        return
 
-    ScoreCRUD.create(book_id=book.id, quantity=book_information['stock'])
+    ScoreCRUD.create(book_id=book.id, score=book_information.get('rating', 0.0))
     StockCRUD.create(book_id=book.id, quantity=book_information['stock'])
 
 
@@ -49,7 +56,6 @@ class BookCRUD:
         category_id: int,
         description: str,
         image_url: str,
-        image_url_string: str,
         stock_int: int = 0
     ) -> Optional[Book]:
         try:
@@ -65,7 +71,6 @@ class BookCRUD:
                     category_id=category_id,
                     description=description,
                     image_url=image_url,
-                    image_url_string=image_url_string,
                     stock_int=stock_int
                 )
                 session.add(book)

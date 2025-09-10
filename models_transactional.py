@@ -50,7 +50,6 @@ class Book(TransactionalBase, table=True):
     stock_int: int = Field(default=0)
     image_url: str
     category_id: int = Field(foreign_key="categories.id")
-    image_url_string: str
     description: str
     
     category: Optional[Category] = Relationship(back_populates="books")
